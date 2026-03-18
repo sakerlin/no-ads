@@ -18,6 +18,7 @@ function safeActionCall(fn) {
 
 function setBadge(tabId, count) {
   const text = count > 0 ? String(count) : '';
+  console.log('[no-ads] setBadge', { tabId, count, text });
   safeActionCall(() => chrome.action.setBadgeText({ tabId, text }));
   // always set background so it's visible
   safeActionCall(() => chrome.action.setBadgeBackgroundColor({ tabId, color: '#e11d48' }));
@@ -39,6 +40,7 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
   const tabId = sender?.tab?.id;
+  console.log('[no-ads] onMessage', { msg, tabId, url: sender?.tab?.url });
   if (tabId == null) return;
 
   if (msg?.type === 'resetCount') {

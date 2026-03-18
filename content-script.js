@@ -74,9 +74,10 @@ async function run() {
 
   if (delta > 0) {
     try {
+      console.log('[no-ads] hiddenDelta', delta);
       chrome.runtime.sendMessage({ type: 'hiddenDelta', delta });
-    } catch {
-      // ignore
+    } catch (e) {
+      console.log('[no-ads] sendMessage failed', e);
     }
   }
 }
@@ -89,8 +90,11 @@ function schedule() {
 
 // Initial: reset count for this page, then run
 try {
+  console.log('[no-ads] resetCount');
   chrome.runtime.sendMessage({ type: 'resetCount' });
-} catch {}
+} catch (e) {
+  console.log('[no-ads] resetCount send failed', e);
+}
 
 schedule();
 
