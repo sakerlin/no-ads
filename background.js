@@ -50,9 +50,33 @@ function bumpHidden(tabId, delta) {
   setBadge(tabId);
 }
 
+const MATCHED_RULES_MIN_INTERVAL_MS = 5000;
+const lastMatchedFetchAt = new Map();
+const pendingTimers = new Map();
+
+function scheduleRefreshBlockedCount(tabId, delayMs = 0) {
+  if (pendingTimers.has(tabId)) return;
+  const t = setTimeout(() => {
+    pendingTimers.delete(tabId);
+    refreshBlockedCount(tabId);
+  }, delayMs);
+  pendingTimers.set(tabId, t);
+}
+
 async function refreshBlockedCount(tabId) {
   try {
     if (!chrome.declarativeNetRequest?.getMatchedRules) return;
+
+    const now = Date.now();
+    const last = lastMatchedFetchAt.get(tabId) || 0;
+    const wait = MATCHED_RULES_MIN_INTERVAL_MS - (now - last);
+    if (wait > 0) {
+      scheduleRefreshBlockedCount(tabId, wait);
+      return;
+    }
+
+    lastMatchedFetchAt.set(tabId, now);
+
     const res = await chrome.declarativeNetRequest.getMatchedRules({ tabId });
     const matched = res?.rulesMatchedInfo?.length || 0;
     const st = getTabState(tabId);
@@ -73,7 +97,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     tabCounts.set(tabId, { hidden: 0, blocked: 0 });
     setBadge(tabId);
     // refresh blocked count shortly after navigation
-    setTimeout(() => refreshBlockedCount(tabId), 500);
+    scheduleRefreshBlockedCount(tabId, 500);
     return;
   }
 
@@ -91,7 +115,7 @@ if (chrome.declarativeNetRequest?.onRuleMatchedDebug) {
       if (tabId == null || tabId < 0) return;
       console.log('[no-ads] onRuleMatchedDebug', info);
       // instead of +1 blindly, refresh matched rule count (more accurate)
-      refreshBlockedCount(tabId);
+      scheduleRefreshBlockedCount(tabId, 0);
     } catch {
       // ignore
     }
@@ -100,12 +124,12 @@ if (chrome.declarativeNetRequest?.onRuleMatchedDebug) {
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === 'complete') {
-    refreshBlockedCount(tabId);
+    scheduleRefreshBlockedCount(tabId, 0);
   }
 });
 
 chrome.tabs.onActivated.addListener(({ tabId }) => {
-  refreshBlockedCount(tabId);
+  scheduleRefreshBlockedCount(tabId, 0);
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
