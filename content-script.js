@@ -20,24 +20,24 @@ async function getCustomSelectors() {
 }
 
 function hideElements(selectors) {
-  let hidden = 0;
+  let newlyHidden = 0;
   for (const sel of selectors) {
     try {
       const nodes = document.querySelectorAll(sel);
       nodes.forEach((n) => {
         if (!n) return;
-        // do not re-hide if already hidden
-        const style = n.style;
-        if (style && style.display === 'none') return;
+        // only count elements we hide for the first time
+        if (n.getAttribute('data-no-ads-hidden') === '1') return;
+
         n.setAttribute('data-no-ads-hidden', '1');
         n.style.setProperty('display', 'none', 'important');
-        hidden++;
+        newlyHidden++;
       });
     } catch {
       // invalid selector
     }
   }
-  return hidden;
+  return newlyHidden;
 }
 
 let scheduled = false;
@@ -51,7 +51,15 @@ async function run() {
 
   const custom = await getCustomSelectors();
   const selectors = uniq([...DEFAULT_AD_SELECTORS, ...custom]);
-  hideElements(selectors);
+  const delta = hideElements(selectors);
+
+  if (delta > 0) {
+    try {
+      chrome.runtime.sendMessage({ type: 'hiddenDelta', delta });
+    } catch {
+      // ignore
+    }
+  }
 }
 
 function schedule() {
@@ -60,7 +68,11 @@ function schedule() {
   queueMicrotask(run);
 }
 
-// Initial
+// Initial: reset count for this page, then run
+try {
+  chrome.runtime.sendMessage({ type: 'resetCount' });
+} catch {}
+
 schedule();
 
 // Observe dynamic DOM
