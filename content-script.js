@@ -23,6 +23,7 @@ const DEFAULT_AD_SELECTORS = [
   '.caas-ads',
   '[data-test-locator="stream-item-ad"]',
   '[data-test-locator="module-ad"]',
+  '#bannerB > div.ns-jiyjp-e-1.top-panel > div:nth-child(2)',
 ];
 
 const STORAGE_KEY = 'customAdSelectors';
