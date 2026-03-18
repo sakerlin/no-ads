@@ -10,13 +10,19 @@ const DEFAULT_AD_SELECTORS = [
   '[class*="adslot"]',
   '[class*="ad-slot"]',
   '[class*="adsbygoogle"]',
-  // common labels
+
+  // common labels / providers
   'iframe[src*="doubleclick.net"]',
   'iframe[src*="googlesyndication.com"]',
+
   // sticky banners
   '[class*="sticky"][class*="ad"]',
-  // Taiwanese portals sometimes
   '[id*="banner"][id*="ad"]',
+
+  // Yahoo (TW) common ad containers (kept fairly specific)
+  '.caas-ads',
+  '[data-test-locator="stream-item-ad"]',
+  '[data-test-locator="module-ad"]',
 ];
 
 const STORAGE_KEY = 'customAdSelectors';
@@ -71,6 +77,7 @@ async function run() {
   const custom = await getCustomSelectors();
   const selectors = uniq([...DEFAULT_AD_SELECTORS, ...custom]);
   const delta = hideElements(selectors);
+  console.log('[no-ads] run', { delta, selectorCount: selectors.length });
 
   if (delta > 0) {
     try {
