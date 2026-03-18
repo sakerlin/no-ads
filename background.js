@@ -17,7 +17,7 @@ function safeActionCall(fn) {
 }
 
 function setBadge(tabId, count) {
-  const text = count > 0 ? String(count) : '';
+  const text = String(count ?? 0);
   console.log('[no-ads] setBadge', { tabId, count, text });
   safeActionCall(() => chrome.action.setBadgeText({ tabId, text }));
   // always set background so it's visible
