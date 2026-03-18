@@ -78,14 +78,12 @@ async function run() {
   const custom = await getCustomSelectors();
   const selectors = uniq([...DEFAULT_AD_SELECTORS, ...custom]);
   const delta = hideElements(selectors);
-  console.log('[no-ads] run', { delta, selectorCount: selectors.length });
 
   if (delta > 0) {
     try {
-      console.log('[no-ads] hiddenDelta', delta);
       chrome.runtime.sendMessage({ type: 'hiddenDelta', delta });
-    } catch (e) {
-      console.log('[no-ads] sendMessage failed', e);
+    } catch {
+      // ignore
     }
   }
 }
@@ -98,10 +96,9 @@ function schedule() {
 
 // Initial: reset count for this page, then run
 try {
-  console.log('[no-ads] resetCount');
   chrome.runtime.sendMessage({ type: 'resetCount' });
-} catch (e) {
-  console.log('[no-ads] resetCount send failed', e);
+} catch {
+  // ignore
 }
 
 schedule();

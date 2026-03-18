@@ -25,7 +25,7 @@ function setBadge(tabId) {
   const st = getTabState(tabId);
   const total = (st.hidden || 0) + (st.blocked || 0);
   const text = String(total);
-  console.log('[no-ads] setBadge', { tabId, hidden: st.hidden, blocked: st.blocked, total, text });
+  // debug log removed
   safeActionCall(() => chrome.action.setBadgeText({ tabId, text }));
   safeActionCall(() => chrome.action.setBadgeBackgroundColor({ tabId, color: '#e11d48' }));
 }
@@ -83,13 +83,13 @@ async function refreshBlockedCount(tabId) {
     st.blocked = matched;
     setBadge(tabId);
   } catch (e) {
-    console.log('[no-ads] getMatchedRules failed', e);
+    // ignore
   }
 }
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
   const tabId = sender?.tab?.id;
-  console.log('[no-ads] onMessage', { msg, tabId, url: sender?.tab?.url });
+  // debug log removed
   if (tabId == null) return;
   getTabState(tabId);
 
@@ -113,7 +113,6 @@ if (chrome.declarativeNetRequest?.onRuleMatchedDebug) {
     try {
       const tabId = info?.tabId;
       if (tabId == null || tabId < 0) return;
-      console.log('[no-ads] onRuleMatchedDebug', info);
       // instead of +1 blindly, refresh matched rule count (more accurate)
       scheduleRefreshBlockedCount(tabId, 0);
     } catch {
