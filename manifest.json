@@ -3,7 +3,7 @@
   "name": "no ads",
   "version": "0.1.0",
   "description": "Lightweight ad blocker: hide common ad DOM blocks + optional request blocking.",
-  "permissions": ["storage", "declarativeNetRequest", "tabs"],
+  "permissions": ["storage", "declarativeNetRequest", "declarativeNetRequestFeedback", "tabs"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_title": "no ads"

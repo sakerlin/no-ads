@@ -38,6 +38,12 @@ chrome.runtime.onInstalled.addListener(async () => {
   safeActionCall(() => chrome.action.setBadgeBackgroundColor({ color: '#e11d48' }));
 });
 
+function bumpCount(tabId, delta) {
+  const next = (tabCounts.get(tabId) || 0) + Math.max(0, delta);
+  tabCounts.set(tabId, next);
+  setBadge(tabId, next);
+}
+
 chrome.runtime.onMessage.addListener((msg, sender) => {
   const tabId = sender?.tab?.id;
   console.log('[no-ads] onMessage', { msg, tabId, url: sender?.tab?.url });
@@ -51,11 +57,23 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 
   if (msg?.type === 'hiddenDelta') {
     const delta = Number(msg.delta) || 0;
-    const next = (tabCounts.get(tabId) || 0) + Math.max(0, delta);
-    tabCounts.set(tabId, next);
-    setBadge(tabId, next);
+    bumpCount(tabId, delta);
   }
 });
+
+// Count network-level blocks via DNR feedback (requires declarativeNetRequestFeedback)
+if (chrome.declarativeNetRequest?.onRuleMatchedDebug) {
+  chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
+    try {
+      const tabId = info?.tabId;
+      if (tabId == null || tabId < 0) return;
+      console.log('[no-ads] onRuleMatchedDebug', info);
+      bumpCount(tabId, 1);
+    } catch {
+      // ignore
+    }
+  });
+}
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   tabCounts.delete(tabId);
