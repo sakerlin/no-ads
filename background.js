@@ -4,12 +4,23 @@
 
 const tabCounts = new Map();
 
+function safeActionCall(fn) {
+  try {
+    fn();
+    // eslint-disable-next-line no-undef
+    if (chrome?.runtime?.lastError) {
+      // ignore
+    }
+  } catch {
+    // ignore
+  }
+}
+
 function setBadge(tabId, count) {
   const text = count > 0 ? String(count) : '';
-  chrome.action.setBadgeText({ tabId, text });
-  if (count > 0) {
-    chrome.action.setBadgeBackgroundColor({ tabId, color: '#e11d48' });
-  }
+  safeActionCall(() => chrome.action.setBadgeText({ tabId, text }));
+  // always set background so it's visible
+  safeActionCall(() => chrome.action.setBadgeBackgroundColor({ tabId, color: '#e11d48' }));
 }
 
 chrome.runtime.onInstalled.addListener(async () => {
@@ -21,6 +32,9 @@ chrome.runtime.onInstalled.addListener(async () => {
   } catch {
     // ignore
   }
+
+  // Set a default badge color (Chrome may not show badge without it in some themes)
+  safeActionCall(() => chrome.action.setBadgeBackgroundColor({ color: '#e11d48' }));
 });
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
